@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Tam Sayılarla İşlemler - Eğlenceli Oyun</title>
+<style>
+  :root {--bg:#f6fbff;--card:#ffffff;--accent:#3366ff;--good:#1aa57a;--bad:#ff4d4d;--header:#ff9800;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+        background:linear-gradient(180deg,var(--bg),#eaf2ff);min-height:100vh;}
+  a{color:inherit;text-decoration:none;}
+  button{cursor:pointer;}
+  header{background:var(--header);color:white;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;border-radius:0 0 10px 10px;}
+  header h1{margin:0;font-size:22px;}
+  nav{display:flex;gap:12px;flex-wrap:wrap;}
+  nav button{background:white;color:var(--header);border:none;padding:6px 12px;border-radius:8px;font-weight:600;}
+  .wrap{padding:20px;max-width:980px;margin:auto;}
+  .card{background:var(--card);border-radius:14px;box-shadow:0 6px 18px rgba(18,43,90,0.06);padding:18px;margin-bottom:20px;}
+  .grid{display:grid;gap:14px;}
+  .hidden{display:none;}
+  .equation{font-size:28px;font-weight:700;background:linear-gradient(90deg,#f8fbff,#ffffff);padding:18px;border-radius:10px;text-align:center;margin-bottom:12px;}
+  .meta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+  .pill{background:#f1f5ff;padding:8px 10px;border-radius:999px;font-weight:600;}
+  .input-row{display:flex;gap:8px;margin-bottom:12px;}
+  input[type=number]{padding:8px;border-radius:8px;border:1px solid #e1e8ff;flex:1;}
+  button.secondary{background:#eef4ff;color:#123;}
+  .result{height:30px;font-weight:700;}
+  .footer{text-align:center;padding:12px;font-size:14px;color:#555;}
+  .center{text-align:center;}
+  @media(max-width:720px){.input-row{flex-direction:column;}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+
+<header>
+  <h1>🎮 Tam Sayılarla İşlemler</h1>
+  <nav>
+    <button onclick="showPage('home')">Ana Sayfa</button>
+    <button onclick="showPage('game')">Oyuna Başla</button>
+    <button onclick="showPage('how')">Nasıl Oynanır?</button>
+    <button onclick="showPage('about')">Hakkında</button>
+    <button id="shopBtn" class="secondary" onclick="shopEl.classList.toggle('hidden')">🛒 Mağaza</button>
+  </nav>
+</header>
+
+<div class="wrap">
+
+  <!-- ANA SAYFA -->
+  <div id="home">
+    <div class="card center">
+      <h2>🎉 Eğlenceli Matematik Oyunu</h2>
+      <p>Tam sayılarla işlemler yap, puan kazan, seviye atla ve mağazadan ödüller al!</p>
+      <button onclick="showPage('game')">Oyuna Başla 🚀</button>
+    </div>
+  </div>
+
+  <!-- NASIL OYNANIR -->
+  <div id="how" class="hidden">
+    <div class="card">
+      <h2>📘 Nasıl Oynanır?</h2>
+      <ul>
+        <li>Sorular ekranda gösterilir, cevabını yaz ve kontrol et.</li>
+        <li>Doğru cevaplarsan puan kazanırsın ve seviye atlayabilirsin.</li>
+        <li>Yanlış cevaplarsan canın azalır.</li>
+        <li>Puanla mağazadan ekstra can veya ipucu alabilirsin.</li>
+        <li>Seviye sistemi: 0-15 Acemi 👶, 16-40 Öğrenci 📘, 41-70 Dahi 🧠, 71-100 Matematik Şampiyonu 🏆</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- HAKKINDA -->
+  <div id="about" class="hidden">
+    <div class="card center">
+      <h2>👨‍💻 Hakkında</h2>
+      <p>Bu oyun Ali Ensar tarafından yapılmıştır.</p>
+      <p>Eğlenceli ve öğrenci dostu bir şekilde matematik öğrenmek için tasarlanmıştır.</p>
+    </div>
+  </div>
+
+  <!-- OYUN SAYFASI -->
+  <div id="game" class="hidden">
+    <div class="card grid">
+      <div class="controls" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+        <label>İşlem türü
+          <select id="mode">
+            <option value="add">Toplama</option>
+            <option value="sub">Çıkarma</option>
+            <option value="mul">Çarpma</option>
+            <option value="div">Bölme</option>
+            <option value="paren">Parantezli</option>
+            <option value="mixed" selected>Karışık</option>
+          </select>
+        </label>
+
+        <label>Seviye
+          <select id="level">
+            <option value="1">Seviye 1 (basit)</option>
+            <option value="2">Seviye 2 (orta)</option>
+            <option value="3">Seviye 3 (zor)</option>
+          </select>
+        </label>
+
+        <label>Soru sayısı
+          <select id="questionCount">
+            <option value="10">10 Soru</option>
+            <option value="20">20 Soru</option>
+            <option value="-1">Süresiz</option>
+          </select>
+        </label>
+
+        <div style="display:flex;align-items:flex-end;gap:8px">
+          <button id="startBtn">Oyuna Başla</button>
+          <button id="hintBtn" class="secondary">İpucu</button>
+        </div>
+      </div>
+
+      <div class="equation" id="equation">Başlamak için "Oyuna Başla"ya tıkla.</div>
+
+      <div class="meta">
+        <div class="pill">Puan: <span id="score">0</span></div>
+        <div class="pill">Doğru: <span id="correct">0</span></div>
+        <div class="pill">Yanlış: <span id="wrong">0</span></div>
+        <div class="pill">Can: <span id="lives">3</span> ❤️</div>
+        <div class="pill">Bakiye: <span id="wallet">0</span> 🪙</div>
+        <div class="pill">İpucu: <span id="hints">0</span></div>
+        <div class="pill">Seviye: <span id="rank">Acemi 👶</span></div>
+      </div>
+
+      <div class="input-row">
+        <input type="number" id="answer" placeholder="Cevabını yaz" />
+        <button id="submit">Kontrol Et</button>
+        <button id="skip" class="secondary">Pas</button>
+      </div>
+
+      <div class="result" id="result"></div>
+
+      <!-- MAĞAZA -->
+      <div id="shop" class="card hidden">
+        <h2>🛒 Mağaza</h2>
+        <p>Bakiye: <span id="wallet2">0</span> 🪙</p>
+        <div class="grid">
+          <div>❤️ Ekstra Can (50)
+            <button onclick="buyItem('life',50)">Satın Al</button>
+          </div>
+          <div>💡 İpucu Hakkı (30)
+            <button onclick="buyItem('hint',30)">Satın Al</button>
+          </div>
+          <div>🎉 Süper Konfeti (100)
+            <button onclick="buyItem('konfeti',100)">Satın Al</button>
+          </div>
+        </div>
+        <button onclick="shopEl.classList.add('hidden')">Kapat</button>
+        <hr>
+        <button onclick="resetProfile()">Profili Sıfırla</button>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  Ali Ensar tarafından yapılmıştır
+</div>
+
+<script>
+// Sayfa geçişleri
+function showPage(page){
+  ['home','how','about','game'].forEach(p=>document.getElementById(p).classList.add('hidden'));
+  document.getElementById(page).classList.remove('hidden');
+}
+
+// 🎉 Konfeti ve ses
+function celebrate(text){
+  confetti({particleCount:80,spread:70,origin:{y:0.6}});
+  const msg=new SpeechSynthesisUtterance(text); msg.lang="tr-TR"; window.speechSynthesis.speak(msg);
+}
+function speakWrong(ans){
+  const msg=new SpeechSynthesisUtterance("Yanlış. Doğru cevap "+ans); msg.lang="tr-TR"; window.speechSynthesis.speak(msg);
+}
+
+// Mağaza ve oyun değişkenleri
+let wallet=0, lives=3, hints=0;
+const shopEl = document.getElementById("shop");
+
+// 🎯 Profil sistemi
+function saveProfile(){
+  const profile = {
+    wallet, lives, hints,
+    score: state.score,
+    correct: state.correct,
+    wrong: state.wrong
+  };
+  localStorage.setItem("mathProfile", JSON.stringify(profile));
+}
+function loadProfile(){
+  const data = localStorage.getItem("mathProfile");
+  if(data){
+    const p = JSON.parse(data);
+    wallet = p.wallet || 0;
+    lives = p.lives || 3;
+    hints = p.hints || 0;
+    state.score = p.score || 0;
+    state.correct = p.correct || 0;
+    state.wrong = p.wrong || 0;
+    updateMeta();
+  }
+}
+function resetProfile(){
+  if(confirm("Tüm ilerlemeni sıfırlamak istediğine emin misin?")){
+    localStorage.removeItem("mathProfile");
+    wallet=0; lives=3; hints=0;
+    state.score=0; state.correct=0; state.wrong=0;
+    updateMeta();
+    alert("Profil sıfırlandı!");
+  }
+}
+
+function updateWallet(){
+  document.getElementById("wallet").textContent=wallet;
+  document.getElementById("wallet2").textContent=wallet;
+  document.getElementById("lives").textContent=lives;
+  document.getElementById("hints").textContent=hints;
+  saveProfile();
+}
+function addCoins(amount){ wallet+=amount; updateWallet(); }
+function buyItem(item, price){
+  if(wallet>=price){
+    wallet-=price;
+    if(item==="life"){ lives++; alert("❤️ 1 can aldın!"); }
+    if(item==="hint"){ hints++; alert("💡 1 ipucu aldın!"); }
+    if(item==="konfeti"){ confetti({particleCount:200,spread:120,origin:{y:0.6}}); }
+    updateWallet();
+  }else{ alert("Yeterli puanın yok!"); }
+}
+
+// Oyun
+const startBtn=document.getElementById("startBtn"),
+modeSel=document.getElementById("mode"),
+levelSel=document.getElementById("level"),
+questionCountSel=document.getElementById("questionCount"),
+equationEl=document.getElementById("equation"),
+answerInput=document.getElementById("answer"),
+submitBtn=document.getElementById("submit"),
+skipBtn=document.getElementById("skip"),
+resultEl=document.getElementById("result"),
+scoreEl=document.getElementById("score"),
+correctEl=document.getElementById("correct"),
+wrongEl=document.getElementById("wrong"),
+hintBtn=document.getElementById("hintBtn"),
+rankEl=document.getElementById("rank");
+
+let state={running:false,mode:"mixed",level:1,total:-1,asked:0,correct:0,wrong:0,score:0,current:null};
+
+function randInt(t,e){return Math.floor(Math.random()*(e-t+1))+t;}
+function pickRange(t){return 1==t?{min:-10,max:10}:2==t?{min:-30,max:30}:{min:-100,max:100};}
+
+// Parantezli işlemler
+function makeParenProblem(level){
+  let range = pickRange(level);
+  function rand(){ return randInt(range.min, range.max); }
+
+  if(level===1){
+    let a=rand(), b=rand(), c=rand(), d=rand();
+    let text = `(${a} + ${b}) - (${c} - ${d})`;
+    let ans = (a+b) - (c-d);
+    return {text, ans};
+  }
+  else if(level===2){
+    let a=rand(), b=rand(), c=rand(), d=rand(), e=rand();
+    let text = `(${a} - ${b}) + (${c} × (${d} - ${e}))`;
+    let ans = (a-b) + (c*(d-e));
+    return {text, ans};
+  }
+  else {
+    let a=rand(), b=rand(), c=rand(), d=rand(), e=rand(), f=rand();
+    let text = `((${a} + ${b}) - (${c} - ${d})) × (${e} + ${f})`;
+    let ans = ((a+b) - (c-d)) * (e+f);
+    return {text, ans};
+  }
+}
+
+function makeProblem(){
+  let t=state.mode,e=state.level,n=pickRange(e);let a,b;
+  "mixed"===t&&(t=["add","sub","mul","div","paren"][randInt(0,4)]);
+  "div"===t?(b=randInt(1,10),a=b*randInt(-10,10)):(a=randInt(n.min,n.max),b=randInt(n.min,n.max));
+  let r,o;
+  switch(t){
+    case"add":r=`${a} + ${b}`,o=a+b;break;
+    case"sub":r=`${a} - ${b}`,o=a-b;break;
+    case"mul":r=`${a} × ${b}`,o=a*b;break;
+    case"div":r=`${a} ÷ ${b}`,o=a/b;break;
+    case"paren":return makeParenProblem(e);
+  }
+  return{text:r,ans:o};
+}
+
+function getRank(correct){
+  if(correct<=15) return "Acemi 👶";
+  if(correct<=40) return "Öğrenci 📘";
+  if(correct<=70) return "Dahi 🧠";
+  return "Matematik Şampiyonu 🏆";
+}
+
+function updateMeta(){
+  scoreEl.textContent=state.score;
+  correctEl.textContent=state.correct;
+  wrongEl.textContent=state.wrong;
+  rankEl.textContent=getRank(state.correct);
+  updateWallet();
+  saveProfile();
+}
+
+function showProblem(t){ state.current=t; equationEl.textContent=t.text; answerInput.value=""; resultEl.textContent=""; }
+function loseLife(){ lives--; if(lives<=0){ endGame("Tüm canlar bitti!"); } updateWallet(); }
+
+function checkAnswer(){
+  if(!state.running) return;
+  const t=Number(answerInput.value);
+  state.asked++; let e=state.current.ans;
+  if(Math.abs(t-e)<1e-9){
+    state.correct++; state.score+=10; addCoins(10);
+    resultEl.textContent="✅ Doğru! +10 puan"; celebrate("Doğru");
+  }else{
+    state.wrong++; state.score=Math.max(0,state.score-5);
+    resultEl.textContent=`❌ Yanlış! Doğru: ${e}`; speakWrong(e);
+    loseLife();
+  }
+  updateMeta();
+  if(state.running && state.total!=-1 && state.asked>=state.total){ endGame("Tur bitti! Skor: "+state.score); }
+  else if(lives>0) showProblem(makeProblem());
+}
+
+function startGame(){
+  state.running=true;
+  state.mode=modeSel.value;
+  state.level=Number(levelSel.value);
+  state.total=Number(questionCountSel.value);
+  state.asked=0;
+  updateMeta();
+  showProblem(makeProblem());
+  startBtn.textContent="Yeniden Başlat";
+}
+
+function endGame(msg){ state.running=false; equationEl.textContent=msg; }
+
+startBtn.addEventListener("click",startGame);
+submitBtn.addEventListener("click",checkAnswer);
+answerInput.addEventListener("keydown",e=>{"Enter"===e.key&&checkAnswer();});
+skipBtn.addEventListener("click",()=>{
+  if(state.running){
+    state.asked++; state.wrong++; state.score=Math.max(0,state.score-2); loseLife();
+    updateMeta(); (state.total!=-1 && state.asked>=state.total)?endGame("Tur bitti! Skor: "+state.score):lives>0&&showProblem(makeProblem());
+  }
+});
+hintBtn.addEventListener("click",()=>{
+  if(hints>0 && state.current){ hints--; resultEl.textContent="💡 İpucu: cevabın ilk rakamı "+String(state.current.ans).charAt(0); updateMeta(); }
+  else alert("İpucu hakkın yok! Mağazadan alabilirsin.");
+});
+
+// 🔄 Sayfa yüklendiğinde profili getir
+window.addEventListener("load", loadProfile);
+</script>
+
+</body>
+</html>
